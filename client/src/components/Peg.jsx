@@ -1,4 +1,4 @@
-const Peg = ({ player, cx, cy, onClick}) => {
+const Peg = ({ player, cx, cy, onClick, handleMouseEnter, validMove, handleMouseLeave}) => {
     let color = ""
     if(player == 0) {
         color = "blue"
@@ -7,8 +7,12 @@ const Peg = ({ player, cx, cy, onClick}) => {
     } else {
         color = "black"
     }
+    
+    if(validMove) {
+        color = "yellow"
+    }
 
-    return <circle cx={cx} cy={cy} r="6" fill={color} onClick={onClick}/>
+    return <circle cx={cx} cy={cy} r="6" fill={color} onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}/>
 }
 
 export default Peg
