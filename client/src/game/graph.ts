@@ -1,18 +1,10 @@
-interface Node {
-  id: number;
-  row: number;
-  col: number;
-  neighbors: number[];
-  player: number | undefined;
-}
-
-type Graph = Node[];
+import type { Graph, Node } from "../types.ts";
 
 export function initNode(id: number, row: number, col: number): Node {
   return { id, row, col, neighbors: [], player: undefined };
 }
 
-export function initGraph() {
+export function initGraph(): Graph {
   const nodes = [];
   for (let r = 0; r < 24; r++) {
     for (let c = 0; c < 24; c++) {
@@ -49,7 +41,15 @@ export function initGraph() {
   return nodes;
 }
 
-export function addEdge(nodeA: Node, nodeB: Node) {
-  nodeA.neighbors.push(nodeB.id);
-  nodeB.neighbors.push(nodeA.id);
+export function addEdge(graph: Graph, nodeA: Node, nodeB: Node): Graph {
+  const newGraph = graph.map((node) => {
+    if (node.id === nodeA.id) {
+      return { ...node, neighbors: [...node.neighbors, nodeB.id] };
+    } else if (node.id === nodeB.id) {
+      return { ...node, neighbors: [...node.neighbors, nodeA.id] };
+    }
+    return node;
+  });
+
+  return newGraph;
 }

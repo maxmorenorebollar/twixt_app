@@ -17,7 +17,7 @@ const Board = () => {
     [2, 1],
   ];
 
-  function handlePegClick(clickedId) {
+  function handlePegClick(clickedId: number) {
     setGraph((prevGraph) =>
       prevGraph.map((node) =>
         node.id === clickedId ? { ...node, player: currentPlayer } : node
@@ -45,7 +45,7 @@ const Board = () => {
     return true;
   }
 
-  function handleMouseEnter(node) {
+  function handleMouseEnter(node: Node) {
     let valid = [];
     for (const [dx, dy] of directions) {
       let nx = node.row + dx;
