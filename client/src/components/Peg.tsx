@@ -1,5 +1,5 @@
 interface PegProps {
-  player: number;
+  player: number | undefined;
   cx: number;
   cy: number;
   onClick: React.MouseEventHandler<SVGCircleElement>;
