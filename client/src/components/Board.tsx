@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { initGraph, addEdgesToGraph } from "../game/graph.ts";
+import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
 import type { GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
 import Link from "./Link.js";
@@ -10,7 +10,7 @@ const Board = () => {
   const [validMoves, setValidMoves] = useState<number[][]>([]);
   const [hoverNode, setHoverNode] = useState(null);
   const [links, setLinks] = useState<Edge[]>([]);
-  const [winner, setWinnder] = useState<number | undefined>(undefined);
+  const [winner, setWinner] = useState<number | undefined>(undefined);
 
   const spacing = 1000 / 24;
   const directions = [
@@ -127,7 +127,7 @@ const Board = () => {
   function handlePegClick(clickedId: number) {
     if (graph[clickedId].player !== undefined) {
       return;
-    } else if (gameDone) {
+    } else if (winner !== undefined) {
       return;
     }
 
@@ -155,12 +155,12 @@ const Board = () => {
     }
 
     const newGraph = addEdgesToGraph(newLinks, graph);
-    const gameDone = checkIfGameDone(newGraph);
+    const newWinner = findWinner(newGraph);
 
     setGraph(newGraph);
     setPlayer(1 - currentPlayer);
     setLinks(newLinks.concat(links));
-    setGameDone(gameDone);
+    setWinner(newWinner);
     console.log(graph);
   }
 
@@ -169,6 +169,7 @@ const Board = () => {
   return (
     <>
       <p>Player {currentPlayer}</p>
+      <p>Winner: {winner}</p>
       <svg height="1000" width="1000">
         {links.map((link) => {
           const p1 = nodeCenter(link.nodeA);
