@@ -1,4 +1,4 @@
-import type { Graph, GraphNode } from "../types.ts";
+import type { Graph, GraphNode, Edge } from "../types.ts";
 
 export function initNode(id: number, row: number, col: number): GraphNode {
   return { id, row, col, neighbors: [], player: undefined };
@@ -41,7 +41,7 @@ export function initGraph(): Graph {
   return nodes;
 }
 
-export function addEdge(
+export function addEdgeToGraph(
   graph: Graph,
   nodeA: GraphNode,
   nodeB: GraphNode
@@ -54,6 +54,24 @@ export function addEdge(
     }
     return node;
   });
+
+  return newGraph;
+}
+
+export function addEdgesToGraph(edges: Edge[], graph: Graph): Graph {
+  for (const edge of edges) {
+    const nodeA = edge.nodeA;
+    const nodeB = edge.nodeB;
+
+    graph[nodeA.id].neighbors.push(nodeB.id);
+    graph[nodeB.id].neighbors.push(nodeA.id);
+  }
+
+  const newGraph = graph.map((node) => {
+    return { ...node };
+  });
+
+  console.log(newGraph);
 
   return newGraph;
 }

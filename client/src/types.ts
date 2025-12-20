@@ -6,4 +6,9 @@ export interface GraphNode {
   player: number | undefined;
 }
 
+export interface Edge {
+  nodeA: GraphNode;
+  nodeB: GraphNode;
+}
+
 export type Graph = GraphNode[];
