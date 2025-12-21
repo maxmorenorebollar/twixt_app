@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
 import type { GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
@@ -167,41 +168,71 @@ const Board = () => {
   // console.log(currentPlayer);
 
   return (
-    <>
-      <p>Player {currentPlayer}</p>
-      <p>Winner: {winner}</p>
-      <svg height="1000" width="1000">
-        {links.map((link) => {
-          const p1 = nodeCenter(link.nodeA);
-          const p2 = nodeCenter(link.nodeB);
-          return (
-            <Link
-              key={`${link.nodeA.id}-${link.nodeB.id}`}
-              x1={p1.x}
-              y1={p1.y}
-              x2={p2.x}
-              y2={p2.y}
-            />
-          );
-        })}
-        {graph.map((n) => {
-          return (
-            <Peg
-              key={n.id}
-              cx={n.col * spacing + spacing / 2}
-              cy={n.row * spacing + spacing / 2}
-              player={n.player}
-              validMove={validMoves.some(
-                (node) => n.row == node[0] && n.col == node[1]
-              )}
-              onClick={() => handlePegClick(n.id)}
-              handleMouseEnter={() => handleMouseEnter(n)}
-              handleMouseLeave={() => handleMouseLeave()}
-            />
-          );
-        })}
-      </svg>
-    </>
+    <Stack spacing={1.5}>
+      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+        <Chip
+          label={
+            currentPlayer === 0
+              ? "Turn: Blue (top to bottom)"
+              : "Turn: Red (left to right)"
+          }
+          color={currentPlayer === 0 ? "primary" : "secondary"}
+          className="turn-chip"
+        />
+        {winner !== undefined && (
+          <Chip
+            label={winner === 0 ? "Blue wins" : "Red wins"}
+            color={winner === 0 ? "primary" : "secondary"}
+            variant="outlined"
+            className="winner-chip"
+          />
+        )}
+      </Stack>
+
+      <Paper variant="outlined" className="board-paper">
+        <Box className="board-shell">
+          <Box className="board-square">
+            <svg viewBox="0 0 1000 1000" className="board-svg">
+              {links.map((link) => {
+                const p1 = nodeCenter(link.nodeA);
+                const p2 = nodeCenter(link.nodeB);
+                return (
+                  <Link
+                    key={`${link.nodeA.id}-${link.nodeB.id}`}
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    color={link.nodeA.player === 0 ? "#60a5fa" : "#f87171"}
+                  />
+                );
+              })}
+              {graph.map((n) => {
+                return (
+                  <Peg
+                    key={n.id}
+                    cx={n.col * spacing + spacing / 2}
+                    cy={n.row * spacing + spacing / 2}
+                    player={n.player}
+                    validMove={validMoves.some(
+                      (node) => n.row == node[0] && n.col == node[1]
+                    )}
+                    onClick={() => handlePegClick(n.id)}
+                    handleMouseEnter={() => handleMouseEnter(n)}
+                    handleMouseLeave={() => handleMouseLeave()}
+                  />
+                );
+              })}
+            </svg>
+          </Box>
+        </Box>
+      </Paper>
+
+      <Typography variant="body2" color="text.secondary">
+        Links cannot cross. Valid moves glow yellow. Race to connect your sides
+        first.
+      </Typography>
+    </Stack>
   );
 };
 

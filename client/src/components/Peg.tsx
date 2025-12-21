@@ -18,19 +18,21 @@ const Peg: React.FC<PegProps> = ({
   handleMouseLeave,
 }) => {
   const color = validMove
-    ? "yellow"
+    ? "#facc15"
     : player === 0
-    ? "blue"
+    ? "#42a5f5"
     : player === 1
-    ? "red"
-    : "black";
+    ? "#ef4444"
+    : "#94a3b8";
 
   return (
     <circle
       cx={cx}
       cy={cy}
-      r="6"
+      r={validMove ? 9 : 7}
       fill={color}
+      stroke={validMove ? "#fde047" : "rgba(255,255,255,0.25)"}
+      strokeWidth={validMove ? 2 : 1}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
