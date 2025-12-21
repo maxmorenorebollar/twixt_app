@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
+import io, { Socket } from "socket.io-client";
 import type { GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
 import Link from "./Link.js";
+
+const socket: Socket = io("http://localhost:3000");
 
 const Board = () => {
   const [graph, setGraph] = useState(initGraph());
@@ -23,6 +26,13 @@ const Board = () => {
     [1, -2],
     [2, -1],
   ];
+
+  useEffect(() => {
+    socket.emit("join-room", "1234");
+    socket.on("new-message", (msg: string) => {
+      console.log(msg);
+    });
+  }, []);
 
   function nodeCenter(n: GraphNode) {
     return {
