@@ -95,11 +95,8 @@ const generateInitialGameState = () => {
 };
 
 const Board = () => {
-  // const [graph, setGraph] = useState(initGraph());
-  // const [currentPlayer, setPlayer] = useState(0);
   const [validMoves, setValidMoves] = useState<number[][]>([]);
-  // const [links, setLinks] = useState<Edge[]>([]);
-  // const [winner, setWinner] = useState<number | undefined>(undefined);
+  const [localPlayer, setLocalPlayer] = useState<string | undefined>(undefined);
   const [gameState, dispatch] = useReducer(reducer, generateInitialGameState());
 
   const spacing = 1000 / 24;
@@ -119,6 +116,7 @@ const Board = () => {
 
     socket.on("joined-game", (msg) => {
       dispatch({ type: "initial-game", ...gameState, player: msg.player });
+      setLocalPlayer(msg.player);
       console.log("starting game");
     });
 
@@ -231,6 +229,11 @@ const Board = () => {
     if (gameState.graph[clickedId].player !== undefined) {
       return;
     } else if (gameState.winner !== undefined) {
+      return;
+    } else if (
+      gameState.player !== localPlayer ||
+      gameState.player === undefined
+    ) {
       return;
     }
 
