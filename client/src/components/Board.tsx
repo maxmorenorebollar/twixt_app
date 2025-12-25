@@ -1,19 +1,99 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
 import io, { Socket } from "socket.io-client";
-import type { GraphNode, Edge } from "../types";
+import type { Graph, GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
 import Link from "./Link.js";
 
 const socket: Socket = io("http://localhost:3000");
 
+interface GameState {
+  graph: Graph;
+  player: number | undefined;
+  links: Edge[];
+  winner?: number;
+}
+
+type Action =
+  | {
+      type: "turn";
+      graph: Graph;
+      player: number | undefined;
+      links: Edge[];
+      winner?: number;
+    }
+  | {
+      type: "end-turn";
+      graph: Graph;
+      player: number | undefined;
+      links: Edge[];
+      winner?: number;
+    }
+  | {
+      type: "initial-game";
+      graph: Graph;
+      player: number | undefined;
+      links: Edge[];
+      winner?: number;
+    };
+
+const reducer = (prevState: GameState, action: Action) => {
+  if (action.type === "end-turn") {
+    // represents client ending their turn
+    console.log("end turn", action);
+    socket.emit("end-turn", {
+      graph: action.graph,
+      player: action.player,
+      links: action.links,
+      winner: action.winner,
+    });
+    return {
+      ...prevState,
+      graph: action.graph,
+      player: action.player,
+      links: action.links,
+      winner: action.winner,
+    };
+  } else if (action.type === "turn") {
+    // represents a client recieving opponents turn
+    console.log();
+    return {
+      ...prevState,
+      graph: action.graph,
+      player: action.player,
+      links: action.links,
+      winner: action.winner,
+    };
+  } else if (action.type === "initial-game") {
+    console.log("initial-game", action);
+    return {
+      ...prevState,
+      graph: action.graph,
+      player: action.player,
+      links: action.links,
+      winner: action.winner,
+    };
+  }
+
+  return prevState;
+};
+
+const generateInitialGameState = () => {
+  const newGraph = initGraph();
+  const newLinks: Edge[] = [];
+  const initialState = { graph: newGraph, player: undefined, links: newLinks };
+
+  return initialState;
+};
+
 const Board = () => {
-  const [graph, setGraph] = useState(initGraph());
-  const [currentPlayer, setPlayer] = useState(0);
+  // const [graph, setGraph] = useState(initGraph());
+  // const [currentPlayer, setPlayer] = useState(0);
   const [validMoves, setValidMoves] = useState<number[][]>([]);
-  const [links, setLinks] = useState<Edge[]>([]);
-  const [winner, setWinner] = useState<number | undefined>(undefined);
+  // const [links, setLinks] = useState<Edge[]>([]);
+  // const [winner, setWinner] = useState<number | undefined>(undefined);
+  const [gameState, dispatch] = useReducer(reducer, generateInitialGameState());
 
   const spacing = 1000 / 24;
   const directions = [
@@ -28,9 +108,16 @@ const Board = () => {
   ];
 
   useEffect(() => {
-    socket.emit("join-room", "1234");
-    socket.on("new-message", (msg: string) => {
+    socket.emit("join-game", "1234");
+
+    socket.on("joined-game", (msg) => {
+      dispatch({ type: "initial-game", ...gameState, player: msg.player });
+      console.log("starting game");
+    });
+
+    socket.on("turn", (msg: GameState) => {
       console.log(msg);
+      dispatch({ type: "turn", ...msg });
     });
   }, []);
 
@@ -42,7 +129,7 @@ const Board = () => {
   }
 
   function canCreateLink(x: number, y: number, currentPlayer: number) {
-    let node = graph.find((node) => node.row == x && node.col == y);
+    let node = gameState.graph.find((node) => node.row == x && node.col == y);
 
     if (node === undefined) {
       // console.log("node could not be found");
@@ -105,7 +192,7 @@ const Board = () => {
   }
 
   function isValidMove(x: number, y: number) {
-    let node = graph.find((node) => node.row == x && node.col == y);
+    let node = gameState.graph.find((node) => node.row == x && node.col == y);
 
     if (node === undefined) {
       return false;
@@ -134,14 +221,14 @@ const Board = () => {
   }
 
   function handlePegClick(clickedId: number) {
-    if (graph[clickedId].player !== undefined) {
+    if (gameState.graph[clickedId].player !== undefined) {
       return;
-    } else if (winner !== undefined) {
+    } else if (gameState.winner !== undefined) {
       return;
     }
 
-    graph[clickedId] = { ...graph[clickedId], player: currentPlayer };
-    const node = graph[clickedId];
+    const node = gameState.graph[clickedId];
+    node.player = gameState.player;
 
     // check isValid on all nodes then if it's owned by same player create a link
     const newLinks = [];
@@ -149,10 +236,10 @@ const Board = () => {
       let nx = node.row + dx;
       let ny = node.col + dy;
 
-      const otherNode = canCreateLink(nx, ny, currentPlayer);
+      const otherNode = canCreateLink(nx, ny, gameState.player!);
       if (otherNode) {
         const canidate = { nodeA: node, nodeB: otherNode };
-        const intersects = links.some((link) =>
+        const intersects = gameState.links.some((link) =>
           doSegmentsIntersect(canidate, link)
         );
 
@@ -162,13 +249,15 @@ const Board = () => {
       }
     }
 
-    const newGraph = addEdgesToGraph(newLinks, graph);
+    const newGraph = addEdgesToGraph(newLinks, gameState.graph);
     const newWinner = findWinner(newGraph);
-
-    setGraph(newGraph);
-    setPlayer(1 - currentPlayer);
-    setLinks(newLinks.concat(links));
-    setWinner(newWinner);
+    dispatch({
+      type: "end-turn",
+      graph: newGraph,
+      player: 1 - gameState.player!,
+      links: newLinks.concat(gameState.links),
+      winner: newWinner,
+    });
   }
 
   return (
@@ -176,17 +265,17 @@ const Board = () => {
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
         <Chip
           label={
-            currentPlayer === 0
+            gameState.player === 0
               ? "Turn: Blue (top to bottom)"
               : "Turn: Red (left to right)"
           }
-          color={currentPlayer === 0 ? "primary" : "secondary"}
+          color={gameState.player === 0 ? "primary" : "secondary"}
           className="turn-chip"
         />
-        {winner !== undefined && (
+        {gameState.winner !== undefined && (
           <Chip
-            label={winner === 0 ? "Blue wins" : "Red wins"}
-            color={winner === 0 ? "primary" : "secondary"}
+            label={gameState.winner === 0 ? "Blue wins" : "Red wins"}
+            color={gameState.winner === 0 ? "primary" : "secondary"}
             variant="outlined"
             className="winner-chip"
           />
@@ -197,7 +286,7 @@ const Board = () => {
         <Box className="board-shell">
           <Box className="board-square">
             <svg viewBox="0 0 1000 1000" className="board-svg">
-              {links.map((link) => {
+              {gameState.links.map((link) => {
                 const p1 = nodeCenter(link.nodeA);
                 const p2 = nodeCenter(link.nodeB);
                 return (
@@ -211,7 +300,7 @@ const Board = () => {
                   />
                 );
               })}
-              {graph.map((n) => {
+              {gameState.graph.map((n) => {
                 return (
                   <Peg
                     key={n.id}
