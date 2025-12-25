@@ -1,12 +1,14 @@
 import { useState, useEffect, useReducer } from "react";
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
+import { v4 as uuidv4 } from "uuid";
 import io, { Socket } from "socket.io-client";
 import type { Graph, GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
 import Link from "./Link.js";
 
 const socket: Socket = io("http://localhost:3000");
+const playerId: string = uuidv4();
 
 interface GameState {
   graph: Graph;
@@ -37,6 +39,11 @@ type Action =
       links: Edge[];
       winner?: number;
     };
+
+interface JoinMessage {
+  playerId: string;
+  gameId: string;
+}
 
 const reducer = (prevState: GameState, action: Action) => {
   if (action.type === "end-turn") {
@@ -108,7 +115,7 @@ const Board = () => {
   ];
 
   useEffect(() => {
-    socket.emit("join-game", "1234");
+    socket.emit("join-game", { playerId: playerId, gameId: "123456" });
 
     socket.on("joined-game", (msg) => {
       dispatch({ type: "initial-game", ...gameState, player: msg.player });

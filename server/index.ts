@@ -7,13 +7,13 @@ app.use(express.json());
 const server = createServer(app);
 const PORT = 3000;
 
-const gameManager = new Map<string, Socket[]>();
-const gameSteps: any = [];
+const gameManager = new Map<string, string[]>();
+const socketManager = new Map<string, Socket>();
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Your React app URL
+    origin: "http://localhost:5174",
     methods: ["GET", "POST"],
-    credentials: true, // If using cookies/auth
+    credentials: true,
   },
 });
 
@@ -22,12 +22,14 @@ app.get("/", (_req, res) => {
 });
 
 io.on("connection", (socket: Socket) => {
-  socket.on("join-game", (gameId) => {
-    console.log(`${socket.id} joing game ${gameId}`);
+  socket.on("join-game", ({ playerId, gameId }) => {
+    console.log(`${playerId} joing game ${gameId}`);
 
     const players = gameManager.get(gameId) ?? [];
-    players.push(socket);
+    players.push(playerId);
     gameManager.set(gameId, players);
+
+    socketManager.set(playerId, socket);
 
     socket.emit("joined-game", {
       gameId,
@@ -36,9 +38,9 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("end-turn", (msg) => {
-    gameSteps.push(msg);
-    const client = gameManager.get("1234")![msg.player];
-    client.emit("turn", msg);
+    const opponentId = gameManager.get("123456")![msg.player];
+    const opponentSocket = socketManager.get(opponentId);
+    opponentSocket!.emit("turn", msg);
   });
 });
 
