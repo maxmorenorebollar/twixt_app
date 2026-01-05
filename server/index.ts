@@ -8,7 +8,6 @@ const server = createServer(app);
 const PORT = 3000;
 
 const gameManager = new Map<string, string[]>();
-const socketManager = new Map<string, Socket>();
 
 interface ClientToServerEvents {
   "join-game": (payload: { playerId: string; gameId: string }) => void;
@@ -16,9 +15,14 @@ interface ClientToServerEvents {
 }
 
 interface ServerToClientEvents {
-  "joined-game": (data: { gameId: string; player: number }) => void;
+  "joined-game": (payload: { gameId: string; player: number }) => void;
   "ended-turn": (payload: { player: number }) => void;
 }
+
+const socketManager = new Map<
+  string,
+  Socket<ClientToServerEvents, ServerToClientEvents>
+>();
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
