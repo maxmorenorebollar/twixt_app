@@ -19,7 +19,7 @@ interface ClientToServerEvents {
 
 interface ServerToClientEvents {
   "joined-game": (payload: { gameId: string; player: number }) => void;
-  "ended-turn": (payload: { player: number }) => void;
+  "ended-turn": (payload: { player: number; gameState: GameState }) => void;
 }
 
 const socketManager = new Map<
