@@ -1,11 +1,13 @@
 import express from "express";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
-import { GameState, Edge } from "./types.js";
-import { initGraph } from "./graph.js";
+import { GameState, Edge } from "./types";
+import { initGraph } from "./graph";
 import { nanoid } from "nanoid";
+import cors from "cors";
 const app = express();
 app.use(express.json());
+app.use(cors());
 const server = createServer(app);
 const PORT = 3000;
 
@@ -43,16 +45,16 @@ app.get("/", (_req, res) => {
   res.send("Pong");
 });
 
-app.post("/creategame", (req, res) => {
+app.post("/creategame", (_req, res) => {
   const newGameState = generateInitialGameState();
   const gameId = nanoid(8);
   gameStateManager.set(gameId, [newGameState]);
-  res.send(gameId);
+  res.send(JSON.stringify(gameId));
 });
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
   },
