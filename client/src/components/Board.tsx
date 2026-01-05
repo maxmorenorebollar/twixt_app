@@ -17,33 +17,7 @@ interface GameState {
   winner?: number;
 }
 
-type Action =
-  | {
-      type: "turn";
-      graph: Graph;
-      player: number | undefined;
-      links: Edge[];
-      winner?: number;
-    }
-  | {
-      type: "end-turn";
-      graph: Graph;
-      player: number | undefined;
-      links: Edge[];
-      winner?: number;
-    }
-  | {
-      type: "initial-game";
-      graph: Graph;
-      player: number | undefined;
-      links: Edge[];
-      winner?: number;
-    };
-
-interface JoinMessage {
-  playerId: string;
-  gameId: string;
-}
+type Action = { type: "turn" | "end-turn" | "initial-game" } & GameState;
 
 const reducer = (prevState: GameState, action: Action) => {
   if (action.type === "end-turn") {
@@ -55,35 +29,14 @@ const reducer = (prevState: GameState, action: Action) => {
       links: action.links,
       winner: action.winner,
     });
-    return {
-      ...prevState,
-      graph: action.graph,
-      player: action.player,
-      links: action.links,
-      winner: action.winner,
-    };
-  } else if (action.type === "turn") {
-    // represents a client recieving opponents turn
-    console.log();
-    return {
-      ...prevState,
-      graph: action.graph,
-      player: action.player,
-      links: action.links,
-      winner: action.winner,
-    };
-  } else if (action.type === "initial-game") {
-    console.log("initial-game", action);
-    return {
-      ...prevState,
-      graph: action.graph,
-      player: action.player,
-      links: action.links,
-      winner: action.winner,
-    };
   }
-
-  return prevState;
+  return {
+    ...prevState,
+    graph: action.graph,
+    player: action.player,
+    links: action.links,
+    winner: action.winner,
+  };
 };
 
 const generateInitialGameState = () => {
