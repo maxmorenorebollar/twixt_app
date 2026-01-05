@@ -9,7 +9,18 @@ const PORT = 3000;
 
 const gameManager = new Map<string, string[]>();
 const socketManager = new Map<string, Socket>();
-const io = new Server(server, {
+
+interface ClientToServerEvents {
+  "join-game": (payload: { playerId: string; gameId: string }) => void;
+  "end-turn": (payload: { player: number }) => void;
+}
+
+interface ServerToClientEvents {
+  "joined-game": (data: { gameId: string; player: number }) => void;
+  "ended-turn": (payload: { player: number }) => void;
+}
+
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
     origin: "http://localhost:5174",
     methods: ["GET", "POST"],
@@ -21,7 +32,7 @@ app.get("/", (_req, res) => {
   res.send("Pong");
 });
 
-io.on("connection", (socket: Socket) => {
+io.on("connection", (socket) => {
   socket.on("join-game", ({ playerId, gameId }) => {
     console.log(`${playerId} joing game ${gameId}`);
 
@@ -37,10 +48,10 @@ io.on("connection", (socket: Socket) => {
     });
   });
 
-  socket.on("end-turn", (msg) => {
-    const opponentId = gameManager.get("123456")![msg.player];
+  socket.on("end-turn", ({ player }) => {
+    const opponentId = gameManager.get("123456")![player];
     const opponentSocket = socketManager.get(opponentId);
-    opponentSocket!.emit("turn", msg);
+    opponentSocket!.emit("ended-turn", player);
   });
 });
 
