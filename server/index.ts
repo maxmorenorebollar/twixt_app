@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { GameState, Edge } from "./types";
@@ -51,11 +51,11 @@ const socketManager = new Map<
 
 const gameStateManager = new Map<string, GameState[]>();
 
-app.get("/", (_req, res) => {
+app.get("/", (_req: Request, res: Response) => {
   res.send("Pong");
 });
 
-app.post("/creategame", (_req, res) => {
+app.post("/creategame", (_req: Request, res: Response) => {
   const newGameState = generateInitialGameState();
   const gameId = nanoid(8);
   gameStateManager.set(gameId, [newGameState]);
