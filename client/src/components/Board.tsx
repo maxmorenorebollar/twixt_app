@@ -2,6 +2,7 @@ import { useState, useEffect, useReducer } from "react";
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { initGraph, addEdgesToGraph, findWinner } from "../game/graph.ts";
 import { v4 as uuidv4 } from "uuid";
+import { useParams } from "react-router";
 import io, { Socket } from "socket.io-client";
 import type { Graph, GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
@@ -9,7 +10,6 @@ import Link from "./Link.js";
 
 const socket: Socket = io("http://localhost:3000");
 const playerId: string = uuidv4();
-
 interface GameState {
   graph: Graph;
   player: number | undefined;
@@ -23,12 +23,6 @@ const reducer = (prevState: GameState, action: Action) => {
   if (action.type === "end-turn") {
     // represents client ending their turn
     console.log("end turn", action);
-    socket.emit("end-turn", {
-      graph: action.graph,
-      player: action.player,
-      links: action.links,
-      winner: action.winner,
-    });
   }
   return {
     ...prevState,
@@ -51,6 +45,7 @@ const Board = () => {
   const [validMoves, setValidMoves] = useState<number[][]>([]);
   const [localPlayer, setLocalPlayer] = useState<string | undefined>(undefined);
   const [gameState, dispatch] = useReducer(reducer, generateInitialGameState());
+  const { gameId } = useParams();
 
   const spacing = 1000 / 24;
   const directions = [
@@ -65,17 +60,20 @@ const Board = () => {
   ];
 
   useEffect(() => {
-    socket.emit("join-game", { playerId: playerId, gameId: "123456" });
+    socket.emit("join-game", { playerId: playerId, gameId: gameId });
 
     socket.on("joined-game", (msg) => {
-      dispatch({ type: "initial-game", ...gameState, player: msg.player });
+      dispatch({
+        type: "initial-game",
+        ...msg.gameState,
+      });
       setLocalPlayer(msg.player);
-      console.log("starting game");
+      console.log(`starting game as player: ${msg.player}`);
     });
 
-    socket.on("turn", (msg: GameState) => {
+    socket.on("ended-turn", (msg) => {
       console.log(msg);
-      dispatch({ type: "turn", ...msg });
+      dispatch({ type: "turn", ...msg.gameState });
     });
   }, []);
 
@@ -214,6 +212,17 @@ const Board = () => {
 
     const newGraph = addEdgesToGraph(newLinks, gameState.graph);
     const newWinner = findWinner(newGraph);
+    const newGameState = {
+      graph: newGraph,
+      player: gameState.player,
+      links: newLinks.concat(gameState.links),
+      winner: newWinner,
+    };
+    socket.emit("end-turn", {
+      gameId: gameId,
+      playerId: playerId,
+      gameState: newGameState,
+    });
     dispatch({
       type: "end-turn",
       graph: newGraph,

@@ -33,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/game" element={<Game />} />
+        <Route path="/game/:gameId" element={<Game />} />
         <Route path="/creategame" element={<CreateGame />} />
       </Routes>
     </BrowserRouter>
