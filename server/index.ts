@@ -21,16 +21,16 @@ const generateInitialGameState = (): GameState => {
 
 const gameManager = new Map<string, string[]>();
 interface ClientToServerEvents {
-  "join-game": (payload: {
-    playerId: string;
-    gameId: string;
-    gameState: GameState;
-  }) => void;
+  "join-game": (payload: { playerId: string; gameId: string }) => void;
   "end-turn": (payload: { player: number; gameState: GameState }) => void;
 }
 
 interface ServerToClientEvents {
-  "joined-game": (payload: { gameId: string; player: number }) => void;
+  "joined-game": (payload: {
+    gameId: string;
+    player: number;
+    gameState: GameState;
+  }) => void;
   "ended-turn": (payload: { player: number; gameState: GameState }) => void;
 }
 
@@ -61,24 +61,25 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
 });
 
 io.on("connection", (socket) => {
-  socket.on("join-game", ({ playerId, gameId, gameState }) => {
+  socket.on("join-game", ({ playerId, gameId }) => {
     console.log(`${playerId} joining game ${gameId}`);
 
-    const players = gameManager.get(gameId) ?? [];
+    const players = [...(gameManager.get(gameId) ?? [])];
     players.push(playerId);
     gameManager.set(gameId, players);
 
-    const currGameStates = [...(gameStateManager.get(gameId) ?? [])];
-    currGameStates.push(gameState);
-    gameStateManager.set(gameId, currGameStates);
-
     // need to handle case where a client disconnects then reconnects
     socketManager.set(playerId, socket);
-
-    socket.emit("joined-game", {
-      gameId,
-      player: players.length - 1,
-    });
+    const gameStates = gameStateManager.get(gameId);
+    if (!gameStates) {
+      console.log("Major error has occured");
+    } else {
+      socket.emit("joined-game", {
+        gameId,
+        player: players.length - 1,
+        gameState: gameStates[gameStates.length - 1],
+      });
+    }
   });
 
   socket.on("end-turn", ({ player, gameState }) => {
