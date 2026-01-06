@@ -84,7 +84,7 @@ io.on("connection", (socket) => {
         });
     });
 });
-const clientDist = join(__dirname, "../client/dist");
+const clientDist = join(__dirname, "../../client/dist");
 app.use(express.static(clientDist, { maxAge: "1y", etag: false }));
 app.get(/^(.*)$/, (_req, res) => res.sendFile(join(clientDist, "index.html")));
 server.listen(PORT, () => {

@@ -11,6 +11,9 @@
     "build": "tsc",
     "dev": "node --loader ts-node/esm --watch index.ts",
     "lint": "eslint .",
+    "postinstall": "npm run build:client && npm run build:server",
+    "build:server": "tsc",
+    "build:client": "cd ../client && npm ci && npm run build",
     "start": "node build/index.js"
   },
   "devDependencies": {
