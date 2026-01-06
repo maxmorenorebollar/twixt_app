@@ -8,9 +8,10 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --noemit",
+    "build": "tsc",
     "dev": "node --loader ts-node/esm --watch index.ts",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "start": "node build/index.js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
