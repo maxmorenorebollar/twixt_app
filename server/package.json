@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "postinstall": "npm run build:client && npm run build:server",
     "build:server": "tsc",
-    "build:client": "cd ../client && npm install && npm run build",
+    "build:client": "cd ../client && npm install --include=dev && npm run build",
     "start": "node build/index.js"
   },
   "devDependencies": {
