@@ -2,14 +2,20 @@ import express from "express";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { GameState, Edge } from "./types";
-import { initGraph } from "./graph";
+import { initGraph } from "./graph.js";
 import { nanoid } from "nanoid";
 import cors from "cors";
+
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(cors());
 const server = createServer(app);
-const PORT = 3000;
+const PORT = process.env.PORT ?? 3000;
 
 const generateInitialGameState = (): GameState => {
   const newGraph = initGraph();
@@ -56,13 +62,7 @@ app.post("/creategame", (_req, res) => {
   res.send(JSON.stringify(gameId));
 });
 
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
 io.on("connection", (socket) => {
   socket.on("join-game", ({ playerId, gameId }) => {
@@ -129,6 +129,10 @@ io.on("connection", (socket) => {
     });
   });
 });
+
+const clientDist = join(__dirname, "../client/dist");
+app.use(express.static(clientDist, { maxAge: "1y", etag: false }));
+app.get(/^(.*)$/, (_req, res) => res.sendFile(join(clientDist, "index.html")));
 
 server.listen(PORT, () => {
   console.log(`server running at http://localhost:${PORT}`);

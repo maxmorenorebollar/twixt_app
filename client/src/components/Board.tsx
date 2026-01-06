@@ -8,7 +8,7 @@ import type { Graph, GraphNode, Edge } from "../types";
 import Peg from "./Peg.js";
 import Link from "./Link.js";
 
-const socket: Socket = io("http://localhost:3000");
+const socket: Socket = io();
 const playerId: string = uuidv4();
 interface GameState {
   graph: Graph;

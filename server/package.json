@@ -4,12 +4,12 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --noemit",
-    "dev": "ts-node-dev index.ts",
+    "dev": "node --loader ts-node/esm --watch index.ts",
     "lint": "eslint ."
   },
   "devDependencies": {
