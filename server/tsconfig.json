@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES6",
     "outDir": "./build/",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -11,5 +11,5 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true
   },
-  "exclude": ["../client", "dist", "node_modules"]
+  "exclude": ["../client", "build", "node_modules"]
 }

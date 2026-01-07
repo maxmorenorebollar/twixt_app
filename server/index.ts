@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
-import { GameState, Edge } from "./types";
+import { GameState, Edge } from "./types.js";
 import { initGraph } from "./graph.js";
 import { nanoid } from "nanoid";
 import cors from "cors";
@@ -9,13 +9,13 @@ import cors from "cors";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(cors());
 const server = createServer(app);
 const PORT = process.env.PORT ?? 3000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const generateInitialGameState = (): GameState => {
   const newGraph = initGraph();
@@ -25,7 +25,6 @@ const generateInitialGameState = (): GameState => {
   return initialState;
 };
 
-const gameManager = new Map<string, string[]>();
 interface ClientToServerEvents {
   "join-game": (payload: { playerId: string; gameId: string }) => void;
   "end-turn": (payload: {
@@ -50,6 +49,8 @@ const socketManager = new Map<
 >();
 
 const gameStateManager = new Map<string, GameState[]>();
+
+const gameManager = new Map<string, string[]>();
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Pong");
