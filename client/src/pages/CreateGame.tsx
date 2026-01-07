@@ -74,7 +74,7 @@ const CreateGame = () => {
                   alignItems={{ xs: "stretch", sm: "center" }}
                 >
                   <Chip
-                    label={link}
+                    label={`https://twixt-app.onrender.com/${link}`}
                     sx={{
                       bgcolor: "common.white",
                       color: "common.black",
@@ -84,14 +84,12 @@ const CreateGame = () => {
                   />
                   <Stack direction="row" spacing={1}>
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       color="primary"
-                      component="a"
-                      href={link}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      component={Link}
+                      to={`/${link}`}
                     >
-                      <Link to={`/${link}`}>Open</Link>
+                      Open
                     </Button>
                     <Button
                       variant="contained"
