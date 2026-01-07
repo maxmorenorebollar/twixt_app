@@ -1,4 +1,4 @@
-import type { Graph, GraphNode, Edge } from "./types";
+import type { Graph, GraphNode, Edge } from "./types.js";
 
 export function initNode(id: number, row: number, col: number): GraphNode {
   return { id, row, col, neighbors: [], player: undefined };
