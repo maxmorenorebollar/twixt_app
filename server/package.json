@@ -25,11 +25,13 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "nanoid": "^5.1.6",
+    "neverthrow": "^8.2.0",
     "socket.io": "^4.8.1",
-    "@types/express": "^5.0.6",
-    "@types/ws": "^8.18.1"
+    "zod": "^4.3.5"
   }
 }
