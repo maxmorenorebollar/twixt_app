@@ -29,7 +29,9 @@ const CreateGame = () => {
 
   const handleCopyGameLink = async (_e: MouseEvent<HTMLButtonElement>) => {
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(
+        `https://twixt-app.onrender.com/${link}`
+      );
     } catch (err) {
       if (err instanceof Error) {
         console.log(err.message);
@@ -72,6 +74,7 @@ const CreateGame = () => {
                   spacing={1.5}
                   direction={{ xs: "column", sm: "row" }}
                   alignItems={{ xs: "stretch", sm: "center" }}
+                  sx={{ flexWrap: { sm: "wrap" } }}
                 >
                   <Chip
                     label={`https://twixt-app.onrender.com/${link}`}
