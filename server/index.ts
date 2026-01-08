@@ -27,6 +27,25 @@ const generateInitialGameState = (): GameState => {
   return initialState;
 };
 
+const findOpponentId = (
+  gameId: string,
+  playerId: string,
+  gameManager: Map<string, string[]>
+): Result<string, string> => {
+  if (!gameManager.has(gameId)) {
+    return err(`${gameId} could not be found in gameManager`);
+  }
+
+  const players = gameManager.get(gameId);
+  const opponentId = players?.find((id) => id !== playerId);
+
+  if (!opponentId) {
+    return err(`${gameId}: opponent does not exist in game`);
+  }
+
+  return ok(opponentId);
+};
+
 interface ClientToServerEvents {
   "join-game": (payload: { playerId: string; gameId: string }) => void;
   "end-turn": (payload: {
@@ -145,41 +164,28 @@ io.on("connection", (socket) => {
   });
 
   socket.on("end-turn", (payload) => {
-    const payloadResult = validateSocketPayload(endTurnSchema, payload);
+    ok(payload)
+      .andThen((payload) => validateSocketPayload(endTurnSchema, payload))
+      .andThen(({ gameId, playerId, gameState }) => {
+        return findOpponentId(gameId, playerId, gameManager)
+          .andThen((oppId) => {
+            const oppSocket = socketManager.get(oppId);
+            if (oppSocket) {
+              return ok(oppSocket);
+            }
 
-    if (payloadResult.isErr()) {
-      console.log(`Invalid end-turn payload: ${payloadResult.error.message}`);
-      return;
-    }
-
-    const { gameId, playerId, gameState } = payloadResult.value;
-
-    const playerIds = gameManager.get(gameId);
-    if (!playerIds) {
-      throw new Error("end-turn: could not find playerIds");
-    }
-
-    const opponentId = playerIds.find((id) => id !== playerId);
-    if (!opponentId) {
-      throw new Error("Could not find opponent id");
-    }
-
-    const opponentSocket = socketManager.get(opponentId);
-    if (!opponentSocket) {
-      throw new Error("Could not find opponent socket");
-    }
-
-    const newGameState = { ...gameState };
-    if (newGameState.player === undefined) {
-      throw new Error(
-        "end-turn: player can't make move game with undefined player"
+            return err(`${gameId}: can't find opponent`);
+          })
+          .map((oppSocket) => ({ oppSocket, gameState }));
+      })
+      .match(
+        ({ oppSocket, gameState }) => {
+          oppSocket.emit("ended-turn", {
+            gameState: { ...gameState, player: 1 - gameState.player! },
+          });
+        },
+        (_err) => console.log(console.log("Could not end turn"))
       );
-    }
-    newGameState.player = 1 - newGameState.player;
-
-    opponentSocket.emit("ended-turn", {
-      gameState: newGameState,
-    });
   });
 });
 
