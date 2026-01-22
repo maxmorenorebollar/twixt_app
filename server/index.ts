@@ -11,6 +11,9 @@ import cors from "cors";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+import pino from "pino";
+const logger = pino();
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -30,7 +33,7 @@ const generateInitialGameState = (): GameState => {
 const findOpponentId = (
   gameId: string,
   playerId: string,
-  gameManager: Map<string, string[]>
+  gameManager: Map<string, string[]>,
 ): Result<string, string> => {
   if (!gameManager.has(gameId)) {
     return err(`${gameId} could not be found in gameManager`);
@@ -44,6 +47,57 @@ const findOpponentId = (
   }
 
   return ok(opponentId);
+};
+
+const joinGame = (
+  gameId: string,
+  playerId: string,
+  gameManager: Map<string, string[]>,
+) => {
+  if (!gameManager.has(gameId)) {
+    return err(
+      new Error(
+        `Player: ${playerId} Game: ${gameId} Message: join-game failed. Game could not be found in gameManager`,
+      ),
+    );
+  }
+
+  const players = gameManager.get(gameId);
+
+  if (!players) {
+    return err(
+      new Error(
+        `Player: ${playerId} Game: ${gameId} Message: join-game failed. Players Array not initilized correctly.`,
+      ),
+    );
+  }
+
+  if (players.length >= 2) {
+    return err(
+      new Error(
+        `Player: ${playerId} Game: ${gameId} Message: join-game failed. Game could not be found game is full`,
+      ),
+    );
+  }
+
+  players.push(playerId);
+  gameManager.set(gameId, players);
+
+  return ok({ playerId: playerId, gameId: gameId });
+};
+
+const getLatestGameState = (gameId: string): Result<GameState, Error> => {
+  let gameState = gameStateManager.get(gameId);
+
+  if (gameState === undefined) {
+    return err(new Error("GameState array not initialized correctly."));
+  }
+
+  if (gameState.length === 0) {
+    return err(new Error("GameState array length is 0."));
+  }
+
+  return ok(gameState[gameState.length - 1]);
 };
 
 interface ClientToServerEvents {
@@ -104,12 +158,13 @@ app.post("/creategame", (_req: Request, res: Response) => {
   const newGameState = generateInitialGameState();
   const gameId = nanoid(8);
   gameStateManager.set(gameId, [newGameState]);
+  gameManager.set(gameId, []);
   res.send(JSON.stringify(gameId));
 });
 
 const validateSocketPayload = <T>(
   schema: z.ZodSchema<T>,
-  payload: unknown
+  payload: unknown,
 ): Result<T, Error> => {
   const result = schema.safeParse(payload);
   if (!result.success) {
@@ -122,45 +177,37 @@ const validateSocketPayload = <T>(
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
 
 io.on("connection", (socket) => {
+  logger.info(`Client connected. ID=${socket.id}`);
+
   socket.on("join-game", (payload) => {
+    logger.info(`Client: ${socket.id} Message: join-game Payload: ${payload}`);
     const payloadResult = validateSocketPayload(joinGameSchema, payload);
 
-    if (payloadResult.isErr()) {
-      console.log(`Invalid join-game payload: ${payloadResult.error.message}`);
-      return;
-    }
-
-    const { gameId, playerId } = payloadResult.value;
-
-    const players = [...(gameManager.get(gameId) ?? [])];
-    if (players.length == 2) {
-      console.log("No more players for this game");
-      return;
-    }
-
-    players.push(playerId);
-    gameManager.set(gameId, players);
-
-    const games = gameStateManager.get(gameId);
-    if (!games) {
-      console.log(`Invalid join-game payload: ${gameId} could not be found.`);
-      return;
-    }
-
-    const game = games[games.length - 1];
-    if (!game) {
-      console.log(
-        "Invalid join-game action. Game was not initilized correctly."
+    payloadResult
+      .andThen((payload) => {
+        socketManager.set(payload.playerId, socket);
+        return joinGame(payload.gameId, payload.playerId, gameManager);
+      })
+      .andThen(({ gameId }) => {
+        return getLatestGameState(gameId).map((gameState) => ({
+          gameId,
+          gameState,
+        }));
+      })
+      .match(
+        ({ gameId, gameState }) => {
+          socket.emit("joined-game", {
+            gameId,
+            gameState: gameState,
+            player: gameState.player + 1,
+          });
+        },
+        (err) => {
+          if (err instanceof Error) {
+            logger.error(err.message);
+          }
+        },
       );
-    }
-
-    // need to handle case where a client disconnects then reconnects
-    socketManager.set(playerId, socket);
-    socket.emit("joined-game", {
-      gameId,
-      gameState: game,
-      player: players.length - 1,
-    });
   });
 
   socket.on("end-turn", (payload) => {
@@ -184,7 +231,7 @@ io.on("connection", (socket) => {
             gameState: { ...gameState, player: 1 - gameState.player! },
           });
         },
-        (_err) => console.log(console.log("Could not end turn"))
+        (_err) => console.log("Could not end turn"),
       );
   });
 });

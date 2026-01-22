@@ -34,11 +34,7 @@ const reducer = (prevState: GameState, action: Action) => {
 };
 
 const generateInitialGameState = () => {
-  const newGraph = initGraph();
-  const newLinks: Edge[] = [];
-  const initialState = { graph: newGraph, player: undefined, links: newLinks };
-
-  return initialState;
+  return { graph: initGraph(), player: undefined, links: [] as Edge[] };
 };
 
 const Board = () => {
@@ -112,7 +108,7 @@ const Board = () => {
     const getOrientation = (
       p: GraphNode,
       q: GraphNode,
-      r: GraphNode
+      r: GraphNode,
     ): number => {
       const val =
         (q.col - p.col) * (r.row - q.row) - (q.row - p.row) * (r.col - q.col);
@@ -201,7 +197,7 @@ const Board = () => {
       if (otherNode) {
         const canidate = { nodeA: node, nodeB: otherNode };
         const intersects = gameState.links.some((link) =>
-          doSegmentsIntersect(canidate, link)
+          doSegmentsIntersect(canidate, link),
         );
 
         if (!intersects) {
@@ -280,7 +276,7 @@ const Board = () => {
                     cy={n.row * spacing + spacing / 2}
                     player={n.player}
                     validMove={validMoves.some(
-                      (node) => n.row == node[0] && n.col == node[1]
+                      (node) => n.row == node[0] && n.col == node[1],
                     )}
                     onClick={() => handlePegClick(n.id)}
                     handleMouseEnter={() => handleMouseEnter(n)}

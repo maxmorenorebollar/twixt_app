@@ -15,7 +15,7 @@ export type Graph = GraphNode[];
 
 export interface GameState {
   graph: Graph;
-  player: number | undefined;
+  player: number;
   links: Edge[];
   winner?: number;
 }
