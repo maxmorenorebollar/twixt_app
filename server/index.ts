@@ -25,7 +25,7 @@ const __dirname = dirname(__filename);
 const generateInitialGameState = (): GameState => {
   const newGraph = initGraph();
   const newLinks: Edge[] = [];
-  const initialState = { graph: newGraph, player: 0, links: newLinks };
+  const initialState = { graph: newGraph, player: -1, links: newLinks };
 
   return initialState;
 };
