@@ -75,7 +75,7 @@ const joinGame = (
   if (players.length >= 2) {
     return err(
       new Error(
-        `Player: ${playerId} Game: ${gameId} Message: join-game failed. Game could not be found game is full`,
+        `Player: ${playerId} Game: ${gameId} Message: join-game failed. Game is full`,
       ),
     );
   }
@@ -180,7 +180,9 @@ io.on("connection", (socket) => {
   logger.info(`Client connected. ID=${socket.id}`);
 
   socket.on("join-game", (payload) => {
-    logger.info(`Client: ${socket.id} Message: join-game Payload: ${payload}`);
+    logger.info(
+      `Client: ${socket.id} Message: join-game Payload: ${JSON.stringify(payload)}`,
+    );
     const payloadResult = validateSocketPayload(joinGameSchema, payload);
 
     payloadResult
@@ -196,10 +198,11 @@ io.on("connection", (socket) => {
       })
       .match(
         ({ gameId, gameState }) => {
-          socket.emit("joined-game", {
+          gameState.player += 1;
+         socket.emit("joined-game", {
             gameId,
             gameState: gameState,
-            player: gameState.player + 1,
+            player: gameState.player,
           });
         },
         (err) => {
@@ -227,6 +230,11 @@ io.on("connection", (socket) => {
       })
       .match(
         ({ oppSocket, gameState }) => {
+          const gameStates = gameStateManager.get(payload.gameId);
+          if (gameStates) {
+            gameStates.push(gameState);
+          }
+
           oppSocket.emit("ended-turn", {
             gameState: { ...gameState, player: 1 - gameState.player! },
           });

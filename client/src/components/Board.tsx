@@ -39,7 +39,7 @@ const generateInitialGameState = () => {
 
 const Board = () => {
   const [validMoves, setValidMoves] = useState<number[][]>([]);
-  const [localPlayer, setLocalPlayer] = useState<string | undefined>(undefined);
+  const [localPlayer, setLocalPlayer] = useState<number | undefined>(undefined);
   const [gameState, dispatch] = useReducer(reducer, generateInitialGameState());
   const { gameId } = useParams();
 
@@ -59,12 +59,19 @@ const Board = () => {
     socket.emit("join-game", { playerId: playerId, gameId: gameId });
 
     socket.on("joined-game", (msg) => {
+      console.log(msg);
       dispatch({
         type: "initial-game",
         ...msg.gameState,
+        player:
+          typeof msg.player === "string"
+            ? parseInt(msg.player, 10)
+            : msg.player,
       });
-      setLocalPlayer(msg.player);
-      console.log(`starting game as player: ${msg.player}`);
+      const p =
+        typeof msg.player === "string" ? parseInt(msg.player, 10) : msg.player;
+      setLocalPlayer(p);
+      console.log(`starting game as player: ${p}`);
     });
 
     socket.on("ended-turn", (msg) => {
@@ -173,6 +180,7 @@ const Board = () => {
   }
 
   function handlePegClick(clickedId: number) {
+    console.log(gameState);
     if (gameState.graph[clickedId].player !== undefined) {
       return;
     } else if (gameState.winner !== undefined) {
