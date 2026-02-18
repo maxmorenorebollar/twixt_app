@@ -82,10 +82,25 @@ const CreateGame = () => {
                       bgcolor: "common.white",
                       color: "common.black",
                       px: 1,
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: "100%",
+                      "& .MuiChip-label": {
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      },
                     }}
                     variant="filled"
                   />
-                  <Stack direction="row" spacing={1}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      flex: 1,
+                      justifyContent: { xs: "center", sm: "flex-end" },
+                    }}
+                  >
                     <Button
                       variant="contained"
                       color="primary"
